@@ -20,16 +20,15 @@ export class SimulationWorld {
     this.playerX += command.moveX * scale * PLAYER_SPEED * deltaSeconds;
     this.playerY += command.moveY * scale * PLAYER_SPEED * deltaSeconds;
 
-    if (!this.countdownTimedOut) {
-      const nextRemaining = Math.max(0, this.countdownRemainingSeconds - deltaSeconds);
+    this.countdownTimedOut = false;
+    const nextRemaining = Math.max(0, this.countdownRemainingSeconds - deltaSeconds);
 
-      if (nextRemaining <= COUNTDOWN_EPSILON) {
-        this.countdownRemainingSeconds = 0;
-        this.countdownTimedOut = true;
-        this.timeoutSequence += 1;
-      } else {
-        this.countdownRemainingSeconds = nextRemaining;
-      }
+    if (nextRemaining <= COUNTDOWN_EPSILON) {
+      this.countdownRemainingSeconds = COUNTDOWN_DURATION_SECONDS;
+      this.countdownTimedOut = true;
+      this.timeoutSequence += 1;
+    } else {
+      this.countdownRemainingSeconds = nextRemaining;
     }
 
     this.tick += 1;
