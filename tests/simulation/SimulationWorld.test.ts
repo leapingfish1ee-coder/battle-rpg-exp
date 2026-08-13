@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SimulationWorld } from '../../src/simulation/world/SimulationWorld';
 
- describe('SimulationWorld', () => {
+describe('SimulationWorld', () => {
   it('advances movement deterministically at a fixed timestep', () => {
     const world = new SimulationWorld();
 
@@ -30,5 +30,25 @@ import { SimulationWorld } from '../../src/simulation/world/SimulationWorld';
     );
 
     expect(diagonalDistance).toBeCloseTo(axialDistance, 6);
+  });
+
+  it('emits one timeout sequence after five seconds', () => {
+    const world = new SimulationWorld();
+
+    for (let tick = 0; tick < 300; tick += 1) {
+      world.step(1 / 60, { moveX: 0, moveY: 0 });
+    }
+
+    const timedOut = world.snapshot();
+    expect(timedOut.countdown.remainingSeconds).toBe(0);
+    expect(timedOut.countdown.timedOut).toBe(true);
+    expect(timedOut.countdown.timeoutSequence).toBe(1);
+    expect(timedOut.countdown.damageAmount).toBe(128);
+
+    for (let tick = 0; tick < 120; tick += 1) {
+      world.step(1 / 60, { moveX: 0, moveY: 0 });
+    }
+
+    expect(world.snapshot().countdown.timeoutSequence).toBe(1);
   });
 });
