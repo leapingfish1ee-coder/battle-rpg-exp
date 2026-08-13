@@ -1,11 +1,12 @@
-import { Application, Graphics, UPDATE_PRIORITY } from 'pixi.js';
+import { Application, UPDATE_PRIORITY } from 'pixi.js';
 import type { PresentationState } from '../../presentation/PresentationState';
 import { createLayers, type RenderLayers } from '../layers/createLayers';
+import { TitleScreen } from '../views/TitleScreen';
 
 export class PixiRenderer {
   private readonly app = new Application();
-  private readonly playerView = new Graphics();
   private layers: RenderLayers | undefined;
+  private titleScreen: TitleScreen | undefined;
   private frameCallback: ((nowMilliseconds: number) => void) | undefined;
 
   private readonly onTick = (): void => {
@@ -14,9 +15,9 @@ export class PixiRenderer {
 
   public async init(host: HTMLElement): Promise<void> {
     await this.app.init({
-      antialias: false,
+      antialias: true,
       autoDensity: true,
-      background: '#0b1020',
+      background: '#211711',
       preference: 'webgl',
       resolution: Math.min(window.devicePixelRatio || 1, 2),
       resizeTo: host,
@@ -32,8 +33,9 @@ export class PixiRenderer {
       this.layers.debug,
     );
 
-    this.playerView.circle(0, 0, 16).fill(0xffffff);
-    this.layers.world.addChild(this.playerView);
+    this.titleScreen = new TitleScreen(this.layers.hud);
+    this.app.canvas.setAttribute('role', 'img');
+    this.app.canvas.setAttribute('aria-label', '战斗 RPG 实验');
     host.appendChild(this.app.canvas);
   }
 
@@ -43,7 +45,8 @@ export class PixiRenderer {
   }
 
   public present(state: PresentationState): void {
-    this.playerView.position.set(state.player.x, state.player.y);
+    void state;
+    this.titleScreen?.layout(this.app.screen.width, this.app.screen.height);
   }
 
   public stop(): void {
@@ -53,6 +56,8 @@ export class PixiRenderer {
 
   public destroy(): void {
     this.stop();
+    this.titleScreen?.destroy();
+    this.titleScreen = undefined;
     this.app.destroy(true);
   }
 }

@@ -1,10 +1,13 @@
 import { expect, test } from '@playwright/test';
 
-test('shows only the centered project title', async ({ page }) => {
+test('renders the project title through the PixiJS canvas', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.getByRole('heading', { name: '战斗 RPG 实验' })).toBeVisible();
-  await expect(page.locator('#app canvas')).toHaveCount(0);
+  const canvas = page.locator('#app canvas[aria-label="战斗 RPG 实验"]');
+
+  await expect(canvas).toBeVisible();
+  await expect(canvas).toHaveAttribute('role', 'img');
+  await expect(page.locator('#app h1')).toHaveCount(0);
   await expect(page.locator('#app button')).toHaveCount(0);
   await expect(page.locator('#app').locator(':scope > *')).toHaveCount(1);
 });
