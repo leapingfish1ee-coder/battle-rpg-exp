@@ -15,6 +15,7 @@ test('renders a looping countdown and repeats the cycle event', async ({ page })
   await expect(canvas).toHaveAttribute('role', 'img');
   await expect(canvas).toHaveAttribute('data-render-state', 'ready');
   await expect(canvas).toHaveAttribute('data-countdown-state', 'running');
+  await expect(canvas).toHaveAttribute('data-layout-unit', '32');
   await expect.poll(sequence).toBe('0');
   await expect(page.locator('#app').locator(':scope > *')).toHaveCount(1);
 
