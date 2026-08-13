@@ -44,7 +44,8 @@ export class PixiRenderer {
     this.app.ticker.add(this.onTick, undefined, UPDATE_PRIORITY.HIGH);
   }
 
-  public present(_state: PresentationState): void {
+  public present(state: PresentationState): void {
+    void state;
     this.titleScreen?.layout(this.app.screen.width, this.app.screen.height);
   }
 
