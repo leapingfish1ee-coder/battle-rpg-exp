@@ -32,23 +32,31 @@ describe('SimulationWorld', () => {
     expect(diagonalDistance).toBeCloseTo(axialDistance, 6);
   });
 
-  it('emits one timeout sequence after five seconds', () => {
+  it('restarts automatically after each timeout', () => {
     const world = new SimulationWorld();
 
     for (let tick = 0; tick < 300; tick += 1) {
       world.step(1 / 60, { moveX: 0, moveY: 0 });
     }
 
-    const timedOut = world.snapshot();
-    expect(timedOut.countdown.remainingSeconds).toBe(0);
-    expect(timedOut.countdown.timedOut).toBe(true);
-    expect(timedOut.countdown.timeoutSequence).toBe(1);
-    expect(timedOut.countdown.damageAmount).toBe(128);
+    const firstTimeout = world.snapshot();
+    expect(firstTimeout.countdown.remainingSeconds).toBe(5);
+    expect(firstTimeout.countdown.timedOut).toBe(true);
+    expect(firstTimeout.countdown.timeoutSequence).toBe(1);
 
-    for (let tick = 0; tick < 120; tick += 1) {
+    world.step(1 / 60, { moveX: 0, moveY: 0 });
+
+    const restarted = world.snapshot();
+    expect(restarted.countdown.timedOut).toBe(false);
+    expect(restarted.countdown.remainingSeconds).toBeCloseTo(5 - 1 / 60, 6);
+
+    for (let tick = 0; tick < 299; tick += 1) {
       world.step(1 / 60, { moveX: 0, moveY: 0 });
     }
 
-    expect(world.snapshot().countdown.timeoutSequence).toBe(1);
+    const secondTimeout = world.snapshot();
+    expect(secondTimeout.countdown.remainingSeconds).toBe(5);
+    expect(secondTimeout.countdown.timedOut).toBe(true);
+    expect(secondTimeout.countdown.timeoutSequence).toBe(2);
   });
 });
