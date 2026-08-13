@@ -20,16 +20,12 @@ export interface PageLayout {
     readonly y: number;
     readonly diameter: number;
     readonly radius: number;
-    readonly labelFontSize: number;
   };
   readonly feedback: {
     readonly originX: number;
     readonly originY: number;
     readonly riseDistance: number;
     readonly swayDistance: number;
-    readonly fontSize: number;
-    readonly strokeWidth: number;
-    readonly shadowDistance: number;
   };
 }
 
@@ -38,26 +34,19 @@ export const resolvePageLayout = (width: number, height: number): PageLayout => 
   const centerY = height / 2;
 
   return {
-    center: {
-      x: centerX,
-      y: centerY,
-    },
+    center: { x: centerX, y: centerY },
     pageInset: PAGE_SPACING.one,
     timer: {
       x: centerX,
       y: centerY,
       diameter: PAGE_LAYOUT_UNIT,
       radius: PAGE_SPACING.half,
-      labelFontSize: PAGE_SPACING.half,
     },
     feedback: {
       originX: centerX,
-      originY: centerY,
-      riseDistance: PAGE_SPACING.four,
+      originY: centerY - (PAGE_LAYOUT_UNIT + PAGE_SPACING.half),
+      riseDistance: PAGE_SPACING.two,
       swayDistance: PAGE_SPACING.quarter,
-      fontSize: PAGE_SPACING.two,
-      strokeWidth: PAGE_SPACING.quarter,
-      shadowDistance: PAGE_LAYOUT_UNIT * 0.125,
     },
   };
 };

@@ -1,10 +1,10 @@
 import { Container, Text } from 'pixi.js';
 import type { PresentationState } from '../../presentation/PresentationState';
-import { PAGE_SPACING, type PageLayout } from '../layout/PageLayout';
+import { resolveDamagePopupMotion } from '../animation/DamagePopupMotion';
+import type { PageLayout } from '../layout/PageLayout';
+import { PAGE_EFFECT_STYLE, PAGE_TYPOGRAPHY } from '../style/PageTypography';
 
 const POPUP_DURATION_SECONDS = 1.05;
-
-const easeOutCubic = (value: number): number => 1 - (1 - value) ** 3;
 
 export class DamagePopupView {
   private readonly root = new Container();
@@ -15,14 +15,14 @@ export class DamagePopupView {
       fill: '#ff6b45',
       fontFamily:
         '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif',
-      fontSize: PAGE_SPACING.two,
-      fontWeight: '900',
-      stroke: { color: '#5a160e', width: PAGE_SPACING.quarter },
+      fontSize: PAGE_TYPOGRAPHY.floatingFeedback.fontSize,
+      fontWeight: PAGE_TYPOGRAPHY.floatingFeedback.fontWeight,
+      stroke: { color: '#5a160e', width: PAGE_EFFECT_STYLE.floatingFeedback.strokeWidth },
       dropShadow: {
         color: '#000000',
-        alpha: 0.55,
-        blur: 2,
-        distance: PAGE_SPACING.quarter / 2,
+        alpha: PAGE_EFFECT_STYLE.floatingFeedback.shadowAlpha,
+        blur: PAGE_EFFECT_STYLE.floatingFeedback.shadowBlur,
+        distance: PAGE_EFFECT_STYLE.floatingFeedback.shadowDistance,
         angle: Math.PI / 4,
       },
     },
@@ -56,18 +56,14 @@ export class DamagePopupView {
 
     this.ageSeconds = Math.min(this.ageSeconds + deltaSeconds, POPUP_DURATION_SECONDS);
     const progress = Math.min(this.ageSeconds / POPUP_DURATION_SECONDS, 1);
-    const rise = easeOutCubic(progress);
-    const fadeStart = 0.62;
-    const fadeProgress = Math.max(0, (progress - fadeStart) / (1 - fadeStart));
-    const introProgress = Math.min(progress / 0.18, 1);
-    const scale = introProgress < 1 ? 0.68 + introProgress * 0.52 : 1.2 - (progress - 0.18) * 0.24;
+    const motion = resolveDamagePopupMotion(progress);
 
     this.text.position.set(
       layout.feedback.originX + Math.sin(progress * Math.PI) * layout.feedback.swayDistance,
-      layout.feedback.originY - rise * layout.feedback.riseDistance,
+      layout.feedback.originY - motion.riseProgress * layout.feedback.riseDistance,
     );
-    this.text.scale.set(Math.max(scale, 1));
-    this.text.alpha = 1 - Math.min(fadeProgress, 1);
+    this.text.scale.set(motion.scale);
+    this.text.alpha = motion.opacity;
 
     if (progress >= 1) {
       this.text.visible = false;

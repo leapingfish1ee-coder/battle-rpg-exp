@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { PAGE_LAYOUT_UNIT, PAGE_SPACING, resolvePageLayout } from '../../src/rendering/layout/PageLayout';
+import {
+  PAGE_LAYOUT_UNIT,
+  PAGE_SPACING,
+  resolvePageLayout,
+} from '../../src/rendering/layout/PageLayout';
 
 describe('PageLayout', () => {
   it('uses the 32 px timer as the page layout unit', () => {
@@ -11,26 +15,17 @@ describe('PageLayout', () => {
     expect(PAGE_SPACING.four).toBe(128);
   });
 
-  it('resolves shared page anchors and component metrics from the same unit', () => {
+  it('resolves geometry without carrying typography or effect styling', () => {
     const layout = resolvePageLayout(1280, 720);
 
     expect(layout.center).toEqual({ x: 640, y: 360 });
     expect(layout.pageInset).toBe(32);
-    expect(layout.timer).toEqual({
-      x: 640,
-      y: 360,
-      diameter: 32,
-      radius: 16,
-      labelFontSize: 16,
-    });
+    expect(layout.timer).toEqual({ x: 640, y: 360, diameter: 32, radius: 16 });
     expect(layout.feedback).toEqual({
       originX: 640,
-      originY: 360,
-      riseDistance: 128,
+      originY: 312,
+      riseDistance: 64,
       swayDistance: 8,
-      fontSize: 64,
-      strokeWidth: 8,
-      shadowDistance: 4,
     });
   });
 });
