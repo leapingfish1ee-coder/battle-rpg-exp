@@ -15,5 +15,10 @@ export const PAGE_EFFECT_STYLE = {
     shadowDistance: 2,
     shadowBlur: 1,
     shadowAlpha: 0.35,
+    motionBlurSamples: [
+      { distance: 4, alpha: 0.18 },
+      { distance: 8, alpha: 0.1 },
+      { distance: 12, alpha: 0.04 },
+    ],
   },
 } as const;

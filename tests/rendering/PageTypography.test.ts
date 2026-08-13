@@ -16,4 +16,12 @@ describe('PageTypography', () => {
     expect(PAGE_EFFECT_STYLE.floatingFeedback.shadowBlur).toBe(1);
     expect(PAGE_EFFECT_STYLE.floatingFeedback.shadowAlpha).toBe(0.35);
   });
+
+  it('uses a short three-sample directional motion trail', () => {
+    expect(PAGE_EFFECT_STYLE.floatingFeedback.motionBlurSamples).toEqual([
+      { distance: 4, alpha: 0.18 },
+      { distance: 8, alpha: 0.1 },
+      { distance: 12, alpha: 0.04 },
+    ]);
+  });
 });
