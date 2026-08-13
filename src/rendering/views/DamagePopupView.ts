@@ -37,9 +37,10 @@ const createPopupText = (withShadow: boolean): Text =>
 export class DamagePopupView {
   private readonly root = new Container();
   private readonly text = createPopupText(true);
-  private readonly trails = PAGE_EFFECT_STYLE.floatingFeedback.motionBlurSamples.map(() =>
-    createPopupText(false),
-  );
+  private readonly trails = PAGE_EFFECT_STYLE.floatingFeedback.motionBlurSamples.map((sample) => ({
+    text: createPopupText(false),
+    sample,
+  }));
 
   private lastSequence = 0;
   private ageSeconds = POPUP_DURATION_SECONDS;
@@ -48,9 +49,9 @@ export class DamagePopupView {
   public constructor(parent: Container) {
     this.text.visible = false;
 
-    for (const trail of this.trails) {
-      trail.visible = false;
-      this.root.addChild(trail);
+    for (const { text } of this.trails) {
+      text.visible = false;
+      this.root.addChild(text);
     }
 
     this.root.addChild(this.text);
@@ -70,9 +71,9 @@ export class DamagePopupView {
         this.text.visible = true;
         this.text.alpha = 1;
 
-        for (const trail of this.trails) {
-          trail.text = value;
-          trail.visible = false;
+        for (const { text } of this.trails) {
+          text.text = value;
+          text.visible = false;
         }
       }
     }
@@ -97,9 +98,7 @@ export class DamagePopupView {
     this.text.scale.set(motion.scale);
     this.text.alpha = motion.opacity;
 
-    for (let index = 0; index < this.trails.length; index += 1) {
-      const trail = this.trails[index];
-      const sample = PAGE_EFFECT_STYLE.floatingFeedback.motionBlurSamples[index];
+    for (const { text: trail, sample } of this.trails) {
       const alpha = motion.opacity * motion.blurStrength * sample.alpha;
 
       if (velocityLength <= 0.001 || alpha <= MIN_TRAIL_ALPHA) {
@@ -119,8 +118,8 @@ export class DamagePopupView {
 
     if (progress >= 1) {
       this.text.visible = false;
-      for (const trail of this.trails) {
-        trail.visible = false;
+      for (const { text } of this.trails) {
+        text.visible = false;
       }
     }
   }
