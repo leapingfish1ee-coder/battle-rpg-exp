@@ -1,10 +1,8 @@
 import { Container, Text } from 'pixi.js';
 import type { PresentationState } from '../../presentation/PresentationState';
+import { PAGE_SPACING, type PageLayout } from '../layout/PageLayout';
 
 const POPUP_DURATION_SECONDS = 1.05;
-const RISE_DISTANCE = 118;
-const MIN_FONT_SIZE = 56;
-const MAX_FONT_SIZE = 92;
 
 const easeOutCubic = (value: number): number => 1 - (1 - value) ** 3;
 
@@ -17,14 +15,14 @@ export class DamagePopupView {
       fill: '#ff6b45',
       fontFamily:
         '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif',
-      fontSize: 72,
+      fontSize: PAGE_SPACING.two,
       fontWeight: '900',
-      stroke: { color: '#5a160e', width: 8 },
+      stroke: { color: '#5a160e', width: PAGE_SPACING.quarter },
       dropShadow: {
         color: '#000000',
         alpha: 0.55,
         blur: 2,
-        distance: 5,
+        distance: PAGE_SPACING.quarter / 2,
         angle: Math.PI / 4,
       },
     },
@@ -40,12 +38,7 @@ export class DamagePopupView {
     parent.addChild(this.root);
   }
 
-  public present(
-    state: PresentationState,
-    width: number,
-    height: number,
-    deltaSeconds: number,
-  ): void {
+  public present(state: PresentationState, layout: PageLayout, deltaSeconds: number): void {
     if (state.damagePopup.sequence !== this.lastSequence) {
       this.lastSequence = state.damagePopup.sequence;
 
@@ -68,12 +61,11 @@ export class DamagePopupView {
     const fadeProgress = Math.max(0, (progress - fadeStart) / (1 - fadeStart));
     const introProgress = Math.min(progress / 0.18, 1);
     const scale = introProgress < 1 ? 0.68 + introProgress * 0.52 : 1.2 - (progress - 0.18) * 0.24;
-    const fontSize = Math.round(
-      Math.min(Math.max(Math.min(width, height) * 0.11, MIN_FONT_SIZE), MAX_FONT_SIZE),
-    );
 
-    this.text.style.fontSize = fontSize;
-    this.text.position.set(width / 2 + Math.sin(progress * Math.PI) * 9, height / 2 - rise * RISE_DISTANCE);
+    this.text.position.set(
+      layout.feedback.originX + Math.sin(progress * Math.PI) * layout.feedback.swayDistance,
+      layout.feedback.originY - rise * layout.feedback.riseDistance,
+    );
     this.text.scale.set(Math.max(scale, 1));
     this.text.alpha = 1 - Math.min(fadeProgress, 1);
 

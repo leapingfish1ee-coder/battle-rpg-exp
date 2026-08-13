@@ -1,16 +1,14 @@
 import { Container, Graphics, Text } from 'pixi.js';
 import type { PresentationState } from '../../presentation/PresentationState';
+import { PAGE_LAYOUT_UNIT, PAGE_SPACING, type PageLayout } from '../layout/PageLayout';
 
-const TIMER_SIZE = 64;
-const RADIUS = TIMER_SIZE / 2;
+const RADIUS = PAGE_LAYOUT_UNIT / 2;
 const START_ANGLE = -Math.PI / 2;
 const FULL_CIRCLE = Math.PI * 2;
 
 export class CountdownTimerView {
   private readonly root = new Container();
-  private readonly track = new Graphics()
-    .circle(0, 0, RADIUS)
-    .fill({ color: '#30231d' });
+  private readonly track = new Graphics().circle(0, 0, RADIUS).fill({ color: '#30231d' });
   private readonly fill = new Graphics();
   private readonly label = new Text({
     text: '',
@@ -19,7 +17,7 @@ export class CountdownTimerView {
       fill: '#fff3df',
       fontFamily:
         '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif',
-      fontSize: 16,
+      fontSize: PAGE_SPACING.half,
       fontWeight: '700',
     },
     anchor: 0.5,
@@ -30,8 +28,8 @@ export class CountdownTimerView {
     parent.addChild(this.root);
   }
 
-  public present(state: PresentationState, width: number, height: number): void {
-    this.root.position.set(width / 2, height / 2);
+  public present(state: PresentationState, layout: PageLayout): void {
+    this.root.position.set(layout.timer.x, layout.timer.y);
 
     const progress = Math.min(Math.max(state.countdown.progress, 0), 1);
     this.fill.clear();
@@ -39,8 +37,14 @@ export class CountdownTimerView {
     if (progress > 0) {
       this.fill
         .moveTo(0, 0)
-        .lineTo(0, -RADIUS)
-        .arc(0, 0, RADIUS, START_ANGLE, START_ANGLE + FULL_CIRCLE * progress)
+        .lineTo(0, -layout.timer.radius)
+        .arc(
+          0,
+          0,
+          layout.timer.radius,
+          START_ANGLE,
+          START_ANGLE + FULL_CIRCLE * progress,
+        )
         .lineTo(0, 0)
         .fill({ color: '#d96d3f' });
     }

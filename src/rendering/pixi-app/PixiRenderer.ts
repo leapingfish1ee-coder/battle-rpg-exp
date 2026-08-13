@@ -1,5 +1,6 @@
 import { Application, UPDATE_PRIORITY } from 'pixi.js';
 import type { PresentationState } from '../../presentation/PresentationState';
+import { resolvePageLayout } from '../layout/PageLayout';
 import { createLayers, type RenderLayers } from '../layers/createLayers';
 import { CountdownTimerView } from '../views/CountdownTimerView';
 import { DamagePopupView } from '../views/DamagePopupView';
@@ -60,16 +61,14 @@ export class PixiRenderer {
     );
     this.previousPresentMilliseconds = nowMilliseconds;
 
-    this.countdownTimerView?.present(state, this.app.screen.width, this.app.screen.height);
-    this.damagePopupView?.present(
-      state,
-      this.app.screen.width,
-      this.app.screen.height,
-      deltaSeconds,
-    );
+    const layout = resolvePageLayout(this.app.screen.width, this.app.screen.height);
+
+    this.countdownTimerView?.present(state, layout);
+    this.damagePopupView?.present(state, layout, deltaSeconds);
 
     this.app.canvas.dataset.countdownState = state.countdown.timedOut ? 'timed-out' : 'running';
     this.app.canvas.dataset.damagePopupSequence = String(state.damagePopup.sequence);
+    this.app.canvas.dataset.layoutUnit = String(layout.timer.diameter);
 
     if (this.app.canvas.dataset.renderState !== 'ready') {
       this.app.render();
