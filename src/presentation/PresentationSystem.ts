@@ -62,8 +62,21 @@ export class PresentationSystem {
           velocityX: projectile.velocity.x,
           velocityY: projectile.velocity.y,
           radius: projectile.radius,
+          energyRatio: clamp01(projectile.energyRatio),
         };
       }),
+      projectileImpacts: current.projectileImpacts.map((impact) => ({
+        id: impact.id,
+        x: impact.position.x,
+        y: impact.position.y,
+        directionX: impact.direction.x,
+        directionY: impact.direction.y,
+        energyRatio: clamp01(impact.energyRatio),
+        progress:
+          impact.durationSeconds > 0
+            ? clamp01(1 - impact.remainingSeconds / impact.durationSeconds)
+            : 1,
+      })),
       meleeSwings: current.meleeSwings.map((swing) => ({
         id: swing.id,
         x: swing.origin.x,

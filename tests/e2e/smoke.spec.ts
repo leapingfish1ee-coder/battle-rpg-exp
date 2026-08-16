@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('runs the cement world with automatic spawning, combat clocks, and camera movement', async ({
+test('runs automatic encounters with kinetic projectile presentation and no held weapon visuals', async ({
   page,
 }) => {
   await page.goto('/');
@@ -13,6 +13,8 @@ test('runs the cement world with automatic spawning, combat clocks, and camera m
   await expect(canvas).toHaveAttribute('role', 'img');
   await expect(canvas).toHaveAttribute('data-render-state', 'ready');
   await expect(canvas).toHaveAttribute('data-world-surface', 'cement');
+  await expect(canvas).toHaveAttribute('data-player-weapon-visuals', 'none');
+  await expect(canvas).toHaveAttribute('data-ballistics-model', 'kinetic-drag');
   await expect(page.locator('#app').locator(':scope > *')).toHaveCount(1);
 
   await expect

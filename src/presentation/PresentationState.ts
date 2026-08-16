@@ -32,6 +32,16 @@ export interface PresentationState {
     readonly velocityX: number;
     readonly velocityY: number;
     readonly radius: number;
+    readonly energyRatio: number;
+  }[];
+  readonly projectileImpacts: readonly {
+    readonly id: number;
+    readonly x: number;
+    readonly y: number;
+    readonly directionX: number;
+    readonly directionY: number;
+    readonly energyRatio: number;
+    readonly progress: number;
   }[];
   readonly meleeSwings: readonly {
     readonly id: number;

@@ -28,6 +28,17 @@ export interface ProjectileState {
   readonly velocity: Vector2;
   readonly radius: number;
   readonly remainingSeconds: number;
+  readonly initialSpeed: number;
+  readonly energyRatio: number;
+}
+
+export interface ProjectileImpactState {
+  readonly id: number;
+  readonly position: Vector2;
+  readonly direction: Vector2;
+  readonly energyRatio: number;
+  readonly durationSeconds: number;
+  readonly remainingSeconds: number;
 }
 
 export interface MeleeSwingState {
@@ -59,6 +70,7 @@ export interface GameState {
   readonly player: PlayerState;
   readonly enemies: readonly EnemyState[];
   readonly projectiles: readonly ProjectileState[];
+  readonly projectileImpacts: readonly ProjectileImpactState[];
   readonly meleeSwings: readonly MeleeSwingState[];
   readonly weapons: readonly WeaponTimerState[];
   readonly spawn: SpawnState;

@@ -3,6 +3,8 @@ import {
   AutoWeaponSystem,
   SABER_ARC_RADIANS,
   SABER_RANGE,
+  SIDEARM_PROJECTILE_DRAG_PER_SECOND,
+  SIDEARM_PROJECTILE_SPEED,
   SIDEARM_SPREAD_RADIANS,
 } from '../../src/simulation/combat/AutoWeaponSystem';
 import type {
@@ -17,6 +19,7 @@ const enemy = (x: number, y: number, health = 3): EnemyRuntime => ({
   behavior: 'chaser',
   position: { x, y },
   velocity: { x: 0, y: 0 },
+  impulseVelocity: { x: 0, y: 0 },
   radius: 10,
   health,
   maxHealth: health,
@@ -38,7 +41,7 @@ describe('AutoWeaponSystem', () => {
     expect(saber?.attackSequence).toBe(0);
   });
 
-  it('fires a moving projectile with deterministic bounded angular spread', () => {
+  it('fires a kinetic projectile with deterministic bounded angular spread', () => {
     const system = new AutoWeaponSystem();
     const target = enemy(400, 0);
     const projectiles: ProjectileRuntime[] = [];
@@ -52,7 +55,12 @@ describe('AutoWeaponSystem', () => {
     expect(projectile).toBeDefined();
     if (!projectile) return;
 
+    const speed = Math.hypot(projectile.velocity.x, projectile.velocity.y);
     const angle = Math.atan2(projectile.velocity.y, projectile.velocity.x);
+    expect(speed).toBeCloseTo(SIDEARM_PROJECTILE_SPEED, 6);
+    expect(projectile.initialSpeed).toBe(SIDEARM_PROJECTILE_SPEED);
+    expect(projectile.dragPerSecond).toBe(SIDEARM_PROJECTILE_DRAG_PER_SECOND);
+    expect(projectile.massScale).toBeGreaterThan(0);
     expect(Math.abs(angle)).toBeLessThanOrEqual(SIDEARM_SPREAD_RADIANS + 1e-9);
   });
 
