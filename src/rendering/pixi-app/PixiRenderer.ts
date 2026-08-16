@@ -1,15 +1,18 @@
 import { Application, UPDATE_PRIORITY } from 'pixi.js';
 import type { PresentationState } from '../../presentation/PresentationState';
-import { resolvePageLayout } from '../layout/PageLayout';
+import { Camera2D } from '../camera/Camera2D';
 import { createLayers, type RenderLayers } from '../layers/createLayers';
-import { CountdownTimerView } from '../views/CountdownTimerView';
-import { DamagePopupView } from '../views/DamagePopupView';
+import { CementFloorView } from '../views/CementFloorView';
+import { PlayerUnitView } from '../views/PlayerUnitView';
+
+const MAX_PRESENT_DELTA_SECONDS = 0.1;
 
 export class PixiRenderer {
   private readonly app = new Application();
+  private readonly camera = new Camera2D();
   private layers: RenderLayers | undefined;
-  private countdownTimerView: CountdownTimerView | undefined;
-  private damagePopupView: DamagePopupView | undefined;
+  private cementFloorView: CementFloorView | undefined;
+  private playerUnitView: PlayerUnitView | undefined;
   private frameCallback: ((nowMilliseconds: number) => void) | undefined;
   private previousPresentMilliseconds = 0;
 
@@ -22,7 +25,7 @@ export class PixiRenderer {
       antialias: true,
       autoDensity: true,
       autoStart: false,
-      background: '#211711',
+      background: '#808080',
       preference: 'webgl',
       resolution: Math.min(window.devicePixelRatio || 1, 2),
       resizeTo: host,
@@ -31,17 +34,16 @@ export class PixiRenderer {
     this.layers = createLayers();
     this.app.stage.addChild(
       this.layers.background,
-      this.layers.world,
-      this.layers.effects,
-      this.layers.foreground,
+      this.layers.worldRoot,
       this.layers.hud,
       this.layers.debug,
     );
 
-    this.countdownTimerView = new CountdownTimerView(this.layers.hud);
-    this.damagePopupView = new DamagePopupView(this.layers.hud);
+    this.cementFloorView = new CementFloorView(this.layers.background);
+    this.playerUnitView = new PlayerUnitView(this.layers.world);
     this.app.canvas.setAttribute('role', 'img');
-    this.app.canvas.setAttribute('aria-label', '倒计时与伤害跳字演示');
+    this.app.canvas.setAttribute('aria-label', '2D player movement world');
+    this.app.canvas.dataset.worldSurface = 'cement';
     host.appendChild(this.app.canvas);
     this.app.resize();
   }
@@ -57,18 +59,29 @@ export class PixiRenderer {
     const nowMilliseconds = performance.now();
     const deltaSeconds = Math.min(
       Math.max((nowMilliseconds - this.previousPresentMilliseconds) / 1000, 0),
-      0.1,
+      MAX_PRESENT_DELTA_SECONDS,
     );
     this.previousPresentMilliseconds = nowMilliseconds;
 
-    const layout = resolvePageLayout(this.app.screen.width, this.app.screen.height);
+    this.camera.update(state.player.x, state.player.y, deltaSeconds);
+    const camera = this.camera.position();
+    const screen = this.app.screen;
 
-    this.countdownTimerView?.present(state, layout);
-    this.damagePopupView?.present(state, layout, deltaSeconds);
+    if (this.layers) {
+      this.layers.worldRoot.position.set(screen.width / 2 - camera.x, screen.height / 2 - camera.y);
+    }
 
-    this.app.canvas.dataset.countdownState = state.countdown.timedOut ? 'timed-out' : 'running';
-    this.app.canvas.dataset.damagePopupSequence = String(state.damagePopup.sequence);
-    this.app.canvas.dataset.layoutUnit = String(layout.timer.diameter);
+    this.cementFloorView?.present(camera.x, camera.y, screen.width, screen.height);
+    this.playerUnitView?.present(state.player);
+
+    this.app.canvas.dataset.playerX = state.player.x.toFixed(3);
+    this.app.canvas.dataset.playerY = state.player.y.toFixed(3);
+    this.app.canvas.dataset.playerSpeed = Math.hypot(
+      state.player.velocityX,
+      state.player.velocityY,
+    ).toFixed(3);
+    this.app.canvas.dataset.cameraX = camera.x.toFixed(3);
+    this.app.canvas.dataset.cameraY = camera.y.toFixed(3);
 
     if (this.app.canvas.dataset.renderState !== 'ready') {
       this.app.render();
@@ -84,10 +97,10 @@ export class PixiRenderer {
 
   public destroy(): void {
     this.stop();
-    this.countdownTimerView?.destroy();
-    this.damagePopupView?.destroy();
-    this.countdownTimerView = undefined;
-    this.damagePopupView = undefined;
+    this.cementFloorView?.destroy();
+    this.playerUnitView?.destroy();
+    this.cementFloorView = undefined;
+    this.playerUnitView = undefined;
     this.app.destroy(true);
   }
 }

@@ -1,32 +1,47 @@
 import { describe, expect, it } from 'vitest';
-import { PresentationSystem } from '../../src/presentation/PresentationSystem';
 import type { GameState } from '../../src/domain/game-state';
+import { PresentationSystem } from '../../src/presentation/PresentationSystem';
 
-const state = (x: number, y: number, remainingSeconds = 5): GameState => ({
+const state = (
+  x: number,
+  y: number,
+  velocityX: number,
+  velocityY: number,
+): GameState => ({
   tick: 0,
-  player: { position: { x, y } },
-  countdown: {
-    durationSeconds: 5,
-    remainingSeconds,
-    timedOut: remainingSeconds <= 0,
-    timeoutSequence: remainingSeconds <= 0 ? 1 : 0,
-    damageAmount: 128,
+  player: {
+    position: { x, y },
+    velocity: { x: velocityX, y: velocityY },
   },
 });
 
 describe('PresentationSystem', () => {
-  it('interpolates between simulation snapshots', () => {
+  it('interpolates player world position and velocity', () => {
     const presentation = new PresentationSystem();
-    const result = presentation.project(state(0, 10), state(10, 30), 0.5);
+    const result = presentation.project(state(0, 10, 20, 0), state(10, 30, 40, 20), 0.5);
 
-    expect(result.player).toEqual({ x: 5, y: 20 });
+    expect(result.player).toEqual({
+      x: 5,
+      y: 20,
+      velocityX: 30,
+      velocityY: 10,
+    });
   });
 
-  it('projects clockwise countdown progress', () => {
+  it('clamps interpolation to the snapshot interval', () => {
     const presentation = new PresentationSystem();
-    const result = presentation.project(state(0, 0, 4), state(0, 0, 3), 0.5);
 
-    expect(result.countdown.remainingSeconds).toBeCloseTo(3.5, 6);
-    expect(result.countdown.progress).toBeCloseTo(0.3, 6);
+    expect(presentation.project(state(0, 0, 0, 0), state(10, 20, 30, 40), -1).player).toEqual({
+      x: 0,
+      y: 0,
+      velocityX: 0,
+      velocityY: 0,
+    });
+    expect(presentation.project(state(0, 0, 0, 0), state(10, 20, 30, 40), 2).player).toEqual({
+      x: 10,
+      y: 20,
+      velocityX: 30,
+      velocityY: 40,
+    });
   });
 });
