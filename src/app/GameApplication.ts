@@ -57,13 +57,14 @@ export class GameApplication {
     this.accumulatorSeconds += frameSeconds;
 
     const command = this.input.command();
+    const viewport = this.renderer.viewport();
     let catchUpSteps = 0;
 
     while (
       this.accumulatorSeconds >= this.clock.fixedDeltaSeconds &&
       catchUpSteps < MAX_CATCH_UP_STEPS
     ) {
-      this.simulation.step(this.clock.fixedDeltaSeconds, command);
+      this.simulation.step(this.clock.fixedDeltaSeconds, command, viewport);
       this.snapshots.commit(this.simulation.snapshot());
       this.accumulatorSeconds -= this.clock.fixedDeltaSeconds;
       catchUpSteps += 1;
