@@ -55,6 +55,8 @@ export class PixiRenderer {
     this.app.canvas.setAttribute('role', 'img');
     this.app.canvas.setAttribute('aria-label', '2D automatic combat world');
     this.app.canvas.dataset.worldSurface = 'cement';
+    this.app.canvas.dataset.playerWeaponVisuals = 'none';
+    this.app.canvas.dataset.ballisticsModel = 'kinetic-drag';
     host.appendChild(this.app.canvas);
     this.app.resize();
   }
@@ -91,11 +93,15 @@ export class PixiRenderer {
 
     this.cementFloorView?.present(camera.x, camera.y, screen.width, screen.height);
     this.enemyFieldView?.present(state.enemies);
-    this.playerUnitView?.present(state.player, state.weapons);
+    this.playerUnitView?.present(state.player);
     this.weaponEffectsView?.present(state);
 
     const chaserCount = state.enemies.filter((enemy) => enemy.behavior === 'chaser').length;
     const stationaryCount = state.enemies.length - chaserCount;
+    const highestImpactId = state.projectileImpacts.reduce(
+      (highest, impact) => Math.max(highest, impact.id),
+      0,
+    );
 
     this.app.canvas.dataset.playerX = state.player.x.toFixed(3);
     this.app.canvas.dataset.playerY = state.player.y.toFixed(3);
@@ -109,6 +115,7 @@ export class PixiRenderer {
     this.app.canvas.dataset.chaserCount = String(chaserCount);
     this.app.canvas.dataset.stationaryCount = String(stationaryCount);
     this.app.canvas.dataset.projectileCount = String(state.projectiles.length);
+    this.app.canvas.dataset.projectileImpactId = String(highestImpactId);
     this.app.canvas.dataset.soloSpawnSequence = String(state.spawn.soloSequence);
     this.app.canvas.dataset.groupSpawnSequence = String(state.spawn.groupSequence);
     this.app.canvas.dataset.sidearmCycleSequence = String(state.weapons.sidearm.cycleSequence);

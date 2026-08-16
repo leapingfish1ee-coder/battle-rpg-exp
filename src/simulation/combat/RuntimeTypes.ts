@@ -11,6 +11,7 @@ export interface EnemyRuntime {
   behavior: EnemyBehavior;
   position: MutableVector2;
   velocity: MutableVector2;
+  impulseVelocity: MutableVector2;
   radius: number;
   health: number;
   maxHealth: number;
@@ -22,7 +23,19 @@ export interface ProjectileRuntime {
   velocity: MutableVector2;
   radius: number;
   remainingSeconds: number;
-  power: number;
+  initialSpeed: number;
+  massScale: number;
+  dragPerSecond: number;
+  basePower: number;
+}
+
+export interface ProjectileImpactRuntime {
+  id: number;
+  position: MutableVector2;
+  direction: MutableVector2;
+  energyRatio: number;
+  durationSeconds: number;
+  remainingSeconds: number;
 }
 
 export interface MeleeSwingRuntime {

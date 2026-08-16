@@ -1,9 +1,10 @@
 import type { GameState, PlayerCommand, Vector2 } from '../../domain/game-state';
 import { AutoWeaponSystem } from '../combat/AutoWeaponSystem';
-import { ProjectileSystem } from '../combat/ProjectileSystem';
+import { projectileEnergyRatio, ProjectileSystem } from '../combat/ProjectileSystem';
 import type {
   EnemyRuntime,
   MeleeSwingRuntime,
+  ProjectileImpactRuntime,
   ProjectileRuntime,
   SimulationViewport,
 } from '../combat/RuntimeTypes';
@@ -26,13 +27,16 @@ export class SimulationWorld {
   private playerVelocity: Vector2 = { x: 0, y: 0 };
   private enemies: EnemyRuntime[] = [];
   private projectiles: ProjectileRuntime[] = [];
+  private projectileImpacts: ProjectileImpactRuntime[] = [];
   private meleeSwings: MeleeSwingRuntime[] = [];
   private nextEnemyId = 1;
   private nextProjectileId = 1;
+  private nextImpactId = 1;
   private nextSwingId = 1;
 
   private readonly allocateEnemyId = (): number => this.nextEnemyId++;
   private readonly allocateProjectileId = (): number => this.nextProjectileId++;
+  private readonly allocateImpactId = (): number => this.nextImpactId++;
   private readonly allocateSwingId = (): number => this.nextSwingId++;
 
   public step(
@@ -46,7 +50,7 @@ export class SimulationWorld {
     this.playerY += this.playerVelocity.y * delta;
 
     const player = { x: this.playerX, y: this.playerY };
-    this.ageMeleeSwings(delta);
+    this.ageTransientEffects(delta);
     this.enemySpawner.step(delta, player, viewport, this.enemies, this.allocateEnemyId);
     this.enemyMovement.step(this.enemies, player, delta);
     this.weapons.step(
@@ -58,7 +62,13 @@ export class SimulationWorld {
       this.allocateProjectileId,
       this.allocateSwingId,
     );
-    this.projectiles = this.projectileSystem.step(this.projectiles, this.enemies, delta);
+    this.projectiles = this.projectileSystem.step(
+      this.projectiles,
+      this.enemies,
+      this.projectileImpacts,
+      delta,
+      this.allocateImpactId,
+    );
     this.enemies = this.enemies.filter((enemy) => enemy.health > 0);
     this.tick += 1;
   }
@@ -82,12 +92,25 @@ export class SimulationWorld {
         health: enemy.health,
         maxHealth: enemy.maxHealth,
       })),
-      projectiles: this.projectiles.map((projectile) => ({
-        id: projectile.id,
-        position: { x: projectile.position.x, y: projectile.position.y },
-        velocity: { x: projectile.velocity.x, y: projectile.velocity.y },
-        radius: projectile.radius,
-        remainingSeconds: projectile.remainingSeconds,
+      projectiles: this.projectiles.map((projectile) => {
+        const speed = Math.hypot(projectile.velocity.x, projectile.velocity.y);
+        return {
+          id: projectile.id,
+          position: { x: projectile.position.x, y: projectile.position.y },
+          velocity: { x: projectile.velocity.x, y: projectile.velocity.y },
+          radius: projectile.radius,
+          remainingSeconds: projectile.remainingSeconds,
+          initialSpeed: projectile.initialSpeed,
+          energyRatio: projectileEnergyRatio(projectile, speed),
+        };
+      }),
+      projectileImpacts: this.projectileImpacts.map((impact) => ({
+        id: impact.id,
+        position: { x: impact.position.x, y: impact.position.y },
+        direction: { x: impact.direction.x, y: impact.direction.y },
+        energyRatio: impact.energyRatio,
+        durationSeconds: impact.durationSeconds,
+        remainingSeconds: impact.remainingSeconds,
       })),
       meleeSwings: this.meleeSwings.map((swing) => ({
         id: swing.id,
@@ -106,10 +129,15 @@ export class SimulationWorld {
     };
   }
 
-  private ageMeleeSwings(deltaSeconds: number): void {
+  private ageTransientEffects(deltaSeconds: number): void {
     for (const swing of this.meleeSwings) {
       swing.remainingSeconds -= deltaSeconds;
     }
     this.meleeSwings = this.meleeSwings.filter((swing) => swing.remainingSeconds > 0);
+
+    for (const impact of this.projectileImpacts) {
+      impact.remainingSeconds -= deltaSeconds;
+    }
+    this.projectileImpacts = this.projectileImpacts.filter((impact) => impact.remainingSeconds > 0);
   }
 }
