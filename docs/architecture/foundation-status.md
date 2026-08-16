@@ -11,10 +11,13 @@ Scope: Initial browser client foundation
 - 60 Hz fixed-step Simulation、accumulator、最大 catch-up 限制与 snapshot interpolation。
 - 浏览器输入到语义 `PlayerCommand` 的映射。
 - 确定性 RNG 与纯 Simulation 单元测试路径。
-- 稳定 Pixi root layers：background/world/effects/foreground/hud/debug。
+- 基于速度、加速度、减速度和二维输入归一化的向量移动系统。
+- 世界坐标玩家状态、Presentation 插值与 Rendering-only `Camera2D` 跟踪边界。
+- 稳定 Pixi root layers：background、world root、world/effects/foreground、hud、debug；camera 只变换 world root。
+- 程序化、世界坐标锚定的水泥地表渲染示例，用于验证 camera/world-space 关系。
 - Asset、Network、Audio、Telemetry 的端口接口，具体实现按实际功能引入。
 - ESLint 架构守卫，禁止 domain/simulation 依赖 PixiJS、rendering、network、platform 与关键浏览器全局。
-- Vitest 单元测试、Playwright 浏览器启动烟测与 GitHub Actions CI。
+- Vitest 单元测试、Playwright 浏览器启动/输入/镜头烟测与 GitHub Actions CI。
 - DisposableScope 作为 Scene/Service 生命周期资源释放基础设施。
 
 ## 当前刻意延后
@@ -40,7 +43,7 @@ Scope: Initial browser client foundation
 2. `npm run lint` 通过；
 3. `npm run test` 通过；
 4. `npm run build` 通过；
-5. Playwright Chromium smoke test 能观察到 PixiJS canvas；
+5. Playwright Chromium smoke test 能观察到 PixiJS canvas，并验证语义移动输入和 camera 跟踪；
 6. domain/simulation 不产生 PixiJS 或浏览器 API 依赖。
 
 后续新增核心边界或改变默认技术决策时，应新增 ADR，而不是直接让实现偏离架构基线。

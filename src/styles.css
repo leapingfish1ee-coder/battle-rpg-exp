@@ -1,6 +1,6 @@
 :root {
   color-scheme: dark;
-  background: #211711;
+  background: #808080;
 }
 
 * {
@@ -17,7 +17,7 @@ body,
 }
 
 body {
-  background: #211711;
+  background: #808080;
 }
 
 #app canvas {
