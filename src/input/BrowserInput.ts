@@ -1,60 +1,51 @@
-import type { PlayerCommand } from '../domain/game-state';
+export interface MenuInputHandlers {
+  readonly onMoveSelection: (step: -1 | 1) => void;
+  readonly onConfirm: () => void;
+}
 
-const MOVEMENT_KEYS = new Set([
+const PREVENT_DEFAULT_KEYS = new Set([
   'ArrowUp',
   'ArrowDown',
-  'ArrowLeft',
-  'ArrowRight',
   'KeyW',
-  'KeyA',
   'KeyS',
-  'KeyD',
+  'Enter',
+  'Space',
 ]);
 
 export class BrowserInput {
-  private readonly pressed = new Set<string>();
+  private handlers: MenuInputHandlers | undefined;
   private attached = false;
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
-    if (MOVEMENT_KEYS.has(event.code)) {
-      this.pressed.add(event.code);
+    if (PREVENT_DEFAULT_KEYS.has(event.code)) event.preventDefault();
+    if (event.repeat) return;
+
+    if (event.code === 'ArrowUp' || event.code === 'KeyW') {
+      this.handlers?.onMoveSelection(-1);
+      return;
+    }
+
+    if (event.code === 'ArrowDown' || event.code === 'KeyS') {
+      this.handlers?.onMoveSelection(1);
+      return;
+    }
+
+    if (event.code === 'Enter' || event.code === 'Space') {
+      this.handlers?.onConfirm();
     }
   };
 
-  private readonly onKeyUp = (event: KeyboardEvent): void => {
-    this.pressed.delete(event.code);
-  };
-
-  private readonly onBlur = (): void => {
-    this.pressed.clear();
-  };
-
-  public attach(): void {
+  public attach(handlers: MenuInputHandlers): void {
+    this.handlers = handlers;
     if (this.attached) return;
     window.addEventListener('keydown', this.onKeyDown);
-    window.addEventListener('keyup', this.onKeyUp);
-    window.addEventListener('blur', this.onBlur);
     this.attached = true;
   }
 
   public detach(): void {
     if (!this.attached) return;
     window.removeEventListener('keydown', this.onKeyDown);
-    window.removeEventListener('keyup', this.onKeyUp);
-    window.removeEventListener('blur', this.onBlur);
-    this.pressed.clear();
+    this.handlers = undefined;
     this.attached = false;
-  }
-
-  public command(): PlayerCommand {
-    const left = this.pressed.has('ArrowLeft') || this.pressed.has('KeyA');
-    const right = this.pressed.has('ArrowRight') || this.pressed.has('KeyD');
-    const up = this.pressed.has('ArrowUp') || this.pressed.has('KeyW');
-    const down = this.pressed.has('ArrowDown') || this.pressed.has('KeyS');
-
-    return {
-      moveX: Number(right) - Number(left),
-      moveY: Number(down) - Number(up),
-    };
   }
 }
