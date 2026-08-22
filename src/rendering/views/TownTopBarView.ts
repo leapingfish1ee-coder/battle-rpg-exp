@@ -61,11 +61,9 @@ export class TownTopBarView {
   private readonly locationValue = createPrimaryValue();
 
   private readonly metrics: StatusMetricView[];
-  private state: AdventureState;
   private lastWidth = Number.NaN;
 
   public constructor(parent: Container, state: AdventureState) {
-    this.state = state;
     this.metrics = [
       this.createMetric('HP', COLORS.hp),
       this.createMetric('MP', COLORS.mp),
@@ -102,7 +100,6 @@ export class TownTopBarView {
   }
 
   public updateState(state: AdventureState): void {
-    this.state = state;
     const hero = state.party[0];
 
     this.playerKicker.text = hero ? `TRAVELER · LV ${String(hero.level).padStart(2, '0')} · ${hero.role}` : 'TRAVELER';
