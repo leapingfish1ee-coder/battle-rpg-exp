@@ -11,3 +11,12 @@
 - Pointer, keyboard, and other page interactions that correspond to visible application controls must be routed to Pixi display objects or the application's input systems rather than external DOM controls.
 - Tests must preserve this contract by asserting that `#app` contains exactly one Pixi canvas and no external application UI nodes throughout home, menu, gameplay, and other page states.
 - Any implementation that introduces application DOM UI outside the Pixi canvas is an architectural regression and must be rejected or refactored before merge.
+
+## Testing standard
+
+- All test additions and modifications must follow [`docs/contributing/testing.md`](docs/contributing/testing.md).
+- Pure state and domain behavior belongs in Vitest; Pixi rendering, pointer behavior, browser integration, and visual regression belong in Playwright running against the real canvas.
+- Semantic state assertions and visual assertions are complementary: screenshots must not replace state/interaction assertions, and state attributes must not replace visual regression coverage where pixel output is part of the contract.
+- Browser tests and test harnesses must preserve the single-Pixi-application, single-canvas, no-application-DOM-UI architecture rule.
+- Visual tests must use deterministic fixtures, frozen time/random inputs, fixed viewports, and reviewed baselines generated in the canonical CI environment.
+- Before merge, run the complete currently implemented suite with `npm run test:all` in an environment where Playwright Chromium is installed, or rely on the equivalent required CI jobs.
