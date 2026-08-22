@@ -56,8 +56,8 @@ test('repeated pointer selection is visually idempotent', async ({ page }) => {
   const rowX = menuX + 10;
   const rowY = menuY + 52;
   const guildCenter = {
-    x: rowX + rowWidth / 2,
-    y: rowY + rowHeight / 2,
+    x: bounds.x + rowX + rowWidth / 2,
+    y: bounds.y + rowY + rowHeight / 2,
   };
   const guildClip = {
     x: bounds.x + rowX,
@@ -69,7 +69,7 @@ test('repeated pointer selection is visually idempotent', async ({ page }) => {
   const before = await page.screenshot({ clip: guildClip });
 
   for (let click = 0; click < 8; click += 1) {
-    await canvas.click({ position: guildCenter });
+    await page.mouse.click(guildCenter.x, guildCenter.y);
     await expect(canvas).toHaveAttribute('data-selected-facility', 'guild');
   }
 
