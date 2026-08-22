@@ -1,16 +1,37 @@
 import { Application, UPDATE_PRIORITY } from 'pixi.js';
 import type { AdventureState, TownFacility } from '../../domain/adventure-state';
-import { TownSceneView } from '../views/TownSceneView';
+import { TownSceneView, type RenderQuality } from '../views/TownSceneView';
 
 interface TownCallbacks {
   readonly onSelectFacility: (facility: TownFacility) => void;
 }
+
+interface RenderProfile {
+  readonly quality: RenderQuality;
+  readonly resolution: number;
+}
+
+const resolveRenderProfile = (): RenderProfile => {
+  const viewportPixels = Math.max(window.innerWidth * window.innerHeight, 1);
+  const cores = navigator.hardwareConcurrency || 4;
+  const deviceDpr = window.devicePixelRatio || 1;
+  const coarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+
+  let quality: RenderQuality = 'medium';
+  if (cores >= 8 && viewportPixels <= 2_600_000 && !coarsePointer) quality = 'high';
+  if (cores <= 2 || viewportPixels > 4_200_000) quality = 'low';
+
+  const targetResolution = quality === 'high' ? 1.75 : quality === 'medium' ? 1.35 : 1;
+  const resolution = Math.min(Math.max(deviceDpr, targetResolution), 2);
+  return { quality, resolution };
+};
 
 export class PixiRenderer {
   private readonly app = new Application();
   private townSceneView: TownSceneView | undefined;
   private tickerAttached = false;
   private startedAtMilliseconds = 0;
+  private renderProfile: RenderProfile = { quality: 'medium', resolution: 1.35 };
 
   private readonly onTick = (): void => {
     const elapsedSeconds = Math.max((performance.now() - this.startedAtMilliseconds) / 1000, 0);
@@ -18,13 +39,14 @@ export class PixiRenderer {
   };
 
   public async init(host: HTMLElement): Promise<void> {
+    this.renderProfile = resolveRenderProfile();
     await this.app.init({
       antialias: true,
       autoDensity: true,
       autoStart: false,
-      background: '#74b9df',
+      background: '#607f9e',
       preference: 'webgl',
-      resolution: Math.min(window.devicePixelRatio || 1, 2),
+      resolution: this.renderProfile.resolution,
       resizeTo: host,
     });
 
@@ -32,13 +54,15 @@ export class PixiRenderer {
     this.app.canvas.setAttribute('aria-label', 'JRPG adventure town interface');
     this.app.canvas.dataset.renderer = 'pixi';
     this.app.canvas.dataset.page = 'boot';
+    this.app.canvas.dataset.renderQuality = this.renderProfile.quality;
+    this.app.canvas.dataset.renderResolution = this.renderProfile.resolution.toFixed(2);
     host.appendChild(this.app.canvas);
     this.app.resize();
   }
 
   public startTown(state: AdventureState, callbacks: TownCallbacks): void {
     this.townSceneView?.destroy();
-    this.townSceneView = new TownSceneView(this.app.stage, state, callbacks);
+    this.townSceneView = new TownSceneView(this.app.stage, state, callbacks, this.renderProfile.quality);
     this.startedAtMilliseconds = performance.now();
     this.updateCanvasState(state);
     this.townSceneView.present(this.app.screen.width, this.app.screen.height, 0);
