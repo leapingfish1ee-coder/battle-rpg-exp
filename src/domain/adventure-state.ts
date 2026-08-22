@@ -27,6 +27,7 @@ export interface AdventureState {
   readonly weather: 'clear';
   readonly gold: number;
   readonly objective: string;
+  readonly message: string;
   readonly selectedFacility: TownFacility;
   readonly facilities: readonly TownFacilityState[];
   readonly party: readonly PartyMemberState[];
@@ -65,6 +66,14 @@ export const TOWN_FACILITIES: readonly TownFacilityState[] = [
   },
 ];
 
+const FACILITY_MESSAGES: Readonly<Record<TownFacility, string>> = {
+  guild: '公会柜台正在受理晨间委托；登记完成后即可领取第一份正式任务。',
+  inn: '银铃旅店的壁炉仍有余温，老板娘正在准备今日的第一锅炖汤。',
+  shop: '白桦商会已经开门，柜台上摆着药草、旅行斗篷与基础武器。',
+  church: '礼拜堂的晨钟刚刚停下，祭司正在为即将出城的旅人祝祷。',
+  gate: '东城门已经开启；城外区域将在后续冒险流程中接入，这里不会启动旧战斗原型。',
+};
+
 export const createInitialAdventureState = (): AdventureState => ({
   screen: 'town',
   townId: 'lumina',
@@ -74,6 +83,7 @@ export const createInitialAdventureState = (): AdventureState => ({
   weather: 'clear',
   gold: 860,
   objective: '前往冒险者公会完成初次登记。',
+  message: '晨钟敲过八下，中央广场已经开始热闹起来。',
   selectedFacility: 'guild',
   facilities: TOWN_FACILITIES,
   party: [
@@ -103,3 +113,8 @@ export const moveTownSelection = (state: AdventureState, step: -1 | 1): Adventur
   const nextIndex = (currentIndex + step + state.facilities.length) % state.facilities.length;
   return selectTownFacility(state, state.facilities[nextIndex]?.id ?? state.selectedFacility);
 };
+
+export const confirmTownFacility = (state: AdventureState): AdventureState => ({
+  ...state,
+  message: FACILITY_MESSAGES[state.selectedFacility],
+});
