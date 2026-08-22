@@ -2,7 +2,7 @@
 
 ## 目标
 
-本项目采用 PixiJS 单 Canvas 架构，测试必须同时覆盖领域状态正确性、Pixi 组件交互契约、完整游戏流程以及最终像素输出，并持续防止应用 UI 回退为 Canvas 外 DOM。
+本项目采用 PixiJS 单 Canvas 架构，测试必须同时覆盖领域状态正确性、Pixi 组件交互契约、完整游戏流程以及最终像素输出，并持续防止应用 UI 回退为 Canvas 外 DOM；所有玩家可见画面还必须符合 [`../art-direction/aesthetic-standard.md`](../art-direction/aesthetic-standard.md) 定义的日式西幻、典雅庄重、高精度渲染与克制后处理基线。
 
 ## 测试层级
 
@@ -46,6 +46,17 @@
 - 黄金图只在固定 CI 平台、固定 Playwright Chromium 与固定字体环境生成和评审，禁止跨操作系统混用 baseline。
 - 初始像素差异阈值应保持严格，允许的差异必须有明确依据；不得通过扩大阈值掩盖真实回归。
 - baseline 更新必须由显式视觉更新命令完成，并与对应 UI 代码变更位于同一 PR，评审时必须检查 expected、actual、diff。
+- 新增或修改全屏 color grade、bloom、vignette、grain、atmosphere 或 RenderTexture pass 时，视觉测试必须至少保留一个固定场景的处理前/处理后可核验结果，防止后处理逐步漂移成过曝、压黑、失焦或噪声化。
+- High、Medium、Low 质量档首次落地后，每个关键场景至少保留 High 与 Low 两个基准，验证降级只牺牲非关键效果而不损伤文字、交互状态和主体轮廓。
+
+## 美学一致性与画面质量验收
+
+- 所有玩家可见改动必须以 `docs/art-direction/aesthetic-standard.md` 为视觉真值，功能测试通过不代表美学验收通过。
+- 视觉评审至少检查主焦点、色彩层级、材质区分、UI 装饰密度、文字可读性、光源逻辑、Bloom 强度、暗部细节和高光保留。
+- 禁止用“大量金色、高饱和、强 Bloom、重 vignette、持续色差、全屏模糊或噪点”替代典雅庄重的设计目标；一旦出现这些效果必须有明确叙事用途和可关闭或可降级策略。
+- 关键视觉变更的 PR 应提供固定 viewport 的 before/after 证据；引入明显 GPU 成本的效果还必须记录至少一种性能依据，例如 frame time、draw calls、RenderTexture 数量或 profiling 截图。
+- 对渲染 scale、filter 参数、质量等级、后处理开关等可配置项，应优先测试集中配置契约，禁止让相同语义散落为多个互相漂移的局部常量。
+- 新增 UI 状态必须确认 hover/selected/pressed 前后尺寸稳定，颜色和描边可以变化，但不得通过累计 scale、bounds 或 filter padding 产生非设计性几何增长。
 
 ## 交互稳定性与绘制幂等性
 
@@ -117,4 +128,4 @@ npm run test:all
 
 ## 视觉基准评审规则
 
-视觉 baseline 变更必须满足以下条件：UI/艺术方向确实发生预期变化；语义状态测试先通过；评审者查看像素差异；变化范围与代码改动一致；不存在字体、时间、随机源或平台漂移造成的噪声。
+视觉 baseline 变更必须同时满足以下条件：UI/艺术方向确实发生预期变化；变化符合 `docs/art-direction/aesthetic-standard.md`；语义状态测试先通过；评审者查看像素差异；变化范围与代码改动一致；不存在字体、时间、随机源、质量档或平台漂移造成的噪声。
