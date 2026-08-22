@@ -156,7 +156,7 @@ export class TownSceneView {
     this.partyStats.anchor.set(0, 0.5);
     this.prompt.anchor.set(0.5, 1);
     this.qualityLabel.anchor.set(1, 1);
-    this.qualityLabel.text = `${quality.toUpperCase()} · PRECISION`;
+    this.qualityLabel.text = `${this.quality.toUpperCase()} · PRECISION`;
 
     for (const facility of state.facilities) {
       const root = new Container();
