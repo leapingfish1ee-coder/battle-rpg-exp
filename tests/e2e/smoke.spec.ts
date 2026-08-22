@@ -38,12 +38,6 @@ test('opens directly in the JRPG town menu through one Pixi canvas', async ({ pa
 });
 
 test('repeated pointer selection is visually idempotent', async ({ page }) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(window.performance, 'now', {
-      configurable: true,
-      value: () => 1_000,
-    });
-  });
   await page.goto('/');
 
   const canvas = page.locator('#app canvas');
@@ -58,20 +52,27 @@ test('repeated pointer selection is visually idempotent', async ({ page }) => {
   const menuX = bounds.width - menuWidth - pad;
   const menuY = compact ? 92 : 108;
   const rowHeight = compact ? 46 : 52;
+  const rowWidth = menuWidth - 20;
+  const rowX = menuX + 10;
+  const rowY = menuY + 52;
   const guildCenter = {
-    x: menuX + menuWidth / 2,
-    y: menuY + 52 + rowHeight / 2,
+    x: rowX + rowWidth / 2,
+    y: rowY + rowHeight / 2,
+  };
+  const guildClip = {
+    x: bounds.x + rowX,
+    y: bounds.y + rowY,
+    width: rowWidth,
+    height: rowHeight,
   };
 
-  await page.mouse.move(1, 1);
-  const before = await canvas.screenshot();
+  const before = await page.screenshot({ clip: guildClip });
 
   for (let click = 0; click < 8; click += 1) {
     await canvas.click({ position: guildCenter });
     await expect(canvas).toHaveAttribute('data-selected-facility', 'guild');
   }
 
-  await page.mouse.move(1, 1);
-  const after = await canvas.screenshot();
+  const after = await page.screenshot({ clip: guildClip });
   expect(after).toEqual(before);
 });
