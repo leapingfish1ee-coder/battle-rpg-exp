@@ -4,6 +4,7 @@ import { Camera2D } from '../camera/Camera2D';
 import { createLayers, type RenderLayers } from '../layers/createLayers';
 import { CementFloorView } from '../views/CementFloorView';
 import { EnemyFieldView } from '../views/EnemyFieldView';
+import { HomeScreenView } from '../views/HomeScreenView';
 import { PlayerUnitView } from '../views/PlayerUnitView';
 import { WeaponEffectsView } from '../views/WeaponEffectsView';
 
@@ -20,12 +21,15 @@ export class PixiRenderer {
   private layers: RenderLayers | undefined;
   private cementFloorView: CementFloorView | undefined;
   private enemyFieldView: EnemyFieldView | undefined;
+  private homeScreenView: HomeScreenView | undefined;
   private playerUnitView: PlayerUnitView | undefined;
   private weaponEffectsView: WeaponEffectsView | undefined;
   private frameCallback: ((nowMilliseconds: number) => void) | undefined;
   private previousPresentMilliseconds = 0;
+  private tickerAttached = false;
 
   private readonly onTick = (): void => {
+    this.homeScreenView?.present(this.app.screen.width, this.app.screen.height);
     this.frameCallback?.(performance.now());
   };
 
@@ -34,7 +38,7 @@ export class PixiRenderer {
       antialias: true,
       autoDensity: true,
       autoStart: false,
-      background: '#808080',
+      background: '#090805',
       preference: 'webgl',
       resolution: Math.min(window.devicePixelRatio || 1, 2),
       resizeTo: host,
@@ -52,11 +56,12 @@ export class PixiRenderer {
     this.enemyFieldView = new EnemyFieldView(this.layers.world);
     this.playerUnitView = new PlayerUnitView(this.layers.world);
     this.weaponEffectsView = new WeaponEffectsView(this.layers.effects);
+    this.setWorldVisible(false);
+
     this.app.canvas.setAttribute('role', 'img');
-    this.app.canvas.setAttribute('aria-label', '2D automatic combat world');
-    this.app.canvas.dataset.worldSurface = 'cement';
-    this.app.canvas.dataset.playerWeaponVisuals = 'none';
-    this.app.canvas.dataset.ballisticsModel = 'kinetic-drag';
+    this.app.canvas.setAttribute('aria-label', 'Battle RPG Pixi application');
+    this.app.canvas.dataset.renderer = 'pixi';
+    this.app.canvas.dataset.page = 'boot';
     host.appendChild(this.app.canvas);
     this.app.resize();
   }
@@ -68,10 +73,31 @@ export class PixiRenderer {
     };
   }
 
+  public startHome(onStart: () => void): void {
+    this.frameCallback = undefined;
+    this.setWorldVisible(false);
+    this.homeScreenView?.destroy();
+    this.homeScreenView = new HomeScreenView(this.app.stage, onStart);
+    this.homeScreenView.present(this.app.screen.width, this.app.screen.height);
+    this.app.canvas.dataset.page = 'home';
+    this.app.canvas.dataset.renderState = 'home-ready';
+    this.ensureTicker();
+    this.app.start();
+  }
+
   public start(frameCallback: (nowMilliseconds: number) => void): void {
+    this.homeScreenView?.destroy();
+    this.homeScreenView = undefined;
+    this.setWorldVisible(true);
     this.frameCallback = frameCallback;
     this.previousPresentMilliseconds = performance.now();
-    this.app.ticker.add(this.onTick, undefined, UPDATE_PRIORITY.HIGH);
+    this.app.canvas.setAttribute('aria-label', '2D automatic combat world');
+    this.app.canvas.dataset.page = 'combat';
+    this.app.canvas.dataset.worldSurface = 'cement';
+    this.app.canvas.dataset.playerWeaponVisuals = 'none';
+    this.app.canvas.dataset.ballisticsModel = 'kinetic-drag';
+    delete this.app.canvas.dataset.renderState;
+    this.ensureTicker();
     this.app.start();
   }
 
@@ -130,21 +156,40 @@ export class PixiRenderer {
   }
 
   public stop(): void {
-    this.app.ticker.remove(this.onTick);
     this.app.stop();
     this.frameCallback = undefined;
   }
 
   public destroy(): void {
     this.stop();
+    if (this.tickerAttached) {
+      this.app.ticker.remove(this.onTick);
+      this.tickerAttached = false;
+    }
+    this.homeScreenView?.destroy();
     this.cementFloorView?.destroy();
     this.enemyFieldView?.destroy();
     this.playerUnitView?.destroy();
     this.weaponEffectsView?.destroy();
+    this.homeScreenView = undefined;
     this.cementFloorView = undefined;
     this.enemyFieldView = undefined;
     this.playerUnitView = undefined;
     this.weaponEffectsView = undefined;
     this.app.destroy(true);
+  }
+
+  private ensureTicker(): void {
+    if (this.tickerAttached) return;
+    this.app.ticker.add(this.onTick, undefined, UPDATE_PRIORITY.HIGH);
+    this.tickerAttached = true;
+  }
+
+  private setWorldVisible(visible: boolean): void {
+    if (!this.layers) return;
+    this.layers.background.visible = visible;
+    this.layers.worldRoot.visible = visible;
+    this.layers.hud.visible = visible;
+    this.layers.debug.visible = visible;
   }
 }
