@@ -1,5 +1,6 @@
 import { Container, Graphics, Text } from 'pixi.js';
 import type { AdventureState, TownFacility } from '../../domain/adventure-state';
+import { TownTopBarView } from './TownTopBarView';
 
 export type RenderQuality = 'high' | 'medium' | 'low';
 
@@ -17,7 +18,6 @@ const COLORS = {
   dim: 0x6d7a88,
   hp: 0x6f9f78,
   mp: 0x6d88b3,
-  shadow: 0x050b12,
 };
 
 interface TownSceneCallbacks {
@@ -39,32 +39,9 @@ export class TownSceneView {
   private readonly root = new Container();
   private readonly ui = new Container();
   private readonly chrome = new Graphics();
-  private readonly crest = new Graphics();
-  private readonly header = new Container();
+  private readonly topBar: TownTopBarView;
   private readonly quality: RenderQuality;
 
-  private readonly locationLabel = new Text({
-    text: '',
-    style: {
-      fill: COLORS.ivory,
-      fontFamily: 'Georgia, "Times New Roman", serif',
-      fontSize: 31,
-      fontWeight: '600',
-      letterSpacing: 0.3,
-    },
-  });
-  private readonly regionLabel = new Text({
-    text: '',
-    style: { fill: COLORS.gold, fontFamily: 'system-ui, sans-serif', fontSize: 10, letterSpacing: 2.4 },
-  });
-  private readonly dayLabel = new Text({
-    text: '',
-    style: { fill: COLORS.text, fontFamily: 'monospace', fontSize: 10, letterSpacing: 1.4 },
-  });
-  private readonly currencyLabel = new Text({
-    text: '',
-    style: { fill: COLORS.goldBright, fontFamily: 'Georgia, serif', fontSize: 14, fontWeight: '600' },
-  });
   private readonly menuKicker = new Text({
     text: 'ROYAL CAPITAL',
     style: { fill: COLORS.dim, fontFamily: 'monospace', fontSize: 8, letterSpacing: 2.8 },
@@ -139,10 +116,6 @@ export class TownSceneView {
     this.state = state;
     this.quality = quality;
 
-    this.locationLabel.anchor.set(0, 0.5);
-    this.regionLabel.anchor.set(0, 0.5);
-    this.dayLabel.anchor.set(1, 0.5);
-    this.currencyLabel.anchor.set(1, 0.5);
     this.menuKicker.anchor.set(0, 0.5);
     this.menuTitle.anchor.set(0, 0.5);
     this.objectiveKicker.anchor.set(0, 0.5);
@@ -179,10 +152,8 @@ export class TownSceneView {
       this.menuRows.push({ root, frame, marker, label, subtitle, facility: facility.id, width: 300, height: 52 });
     }
 
-    this.header.addChild(this.crest, this.locationLabel, this.regionLabel, this.dayLabel, this.currencyLabel);
     this.ui.addChild(
       this.chrome,
-      this.header,
       this.menuKicker,
       this.menuTitle,
       this.objectiveKicker,
@@ -198,6 +169,7 @@ export class TownSceneView {
       this.qualityLabel,
       ...this.menuRows.map((row) => row.root),
     );
+    this.topBar = new TownTopBarView(this.ui, state);
     this.root.addChild(this.ui);
     parent.addChild(this.root);
     this.updateState(state);
@@ -208,10 +180,7 @@ export class TownSceneView {
     const selected = state.facilities.find((facility) => facility.id === state.selectedFacility) ?? state.facilities[0];
     const hero = state.party[0];
 
-    this.locationLabel.text = state.townName;
-    this.regionLabel.text = state.townRegion.toUpperCase();
-    this.dayLabel.text = `DAY ${String(state.day).padStart(2, '0')}  ·  CLEAR`;
-    this.currencyLabel.text = `${state.gold.toLocaleString('en-US')} G`;
+    this.topBar.updateState(state);
     this.objectiveText.text = state.objective;
     this.facilityTitle.text = selected?.label ?? '';
     this.facilityDescription.text = selected?.description ?? '';
@@ -241,14 +210,8 @@ export class TownSceneView {
     const menuX = width - menuWidth - pad;
     const menuY = compact ? 92 : 108;
 
+    this.topBar.layout(width);
     this.drawChrome(width, height, pad, menuX, menuY, menuWidth, bottomHeight, compact);
-    this.drawCrest(pad, 38, compact ? 18 : 22);
-
-    this.locationLabel.style.fontSize = compact ? 23 : 31;
-    this.locationLabel.position.set(pad + (compact ? 32 : 40), 38);
-    this.regionLabel.position.set(pad + (compact ? 185 : 248), 40);
-    this.dayLabel.position.set(width - pad, 30);
-    this.currencyLabel.position.set(width - pad, 51);
 
     this.menuKicker.position.set(menuX + 19, menuY + 17);
     this.menuTitle.style.fontSize = compact ? 15 : 18;
@@ -300,8 +263,6 @@ export class TownSceneView {
     compact: boolean,
   ): void {
     this.chrome.clear();
-    this.chrome.rect(0, 0, width, 76).fill({ color: COLORS.shadow, alpha: 0.82 });
-    this.chrome.moveTo(pad, 67).lineTo(width - pad, 67).stroke({ color: COLORS.oldGold, alpha: 0.55, width: 1 });
 
     const menuHeight = compact ? 310 : 354;
     this.chrome
@@ -325,13 +286,6 @@ export class TownSceneView {
     this.chrome.rect(pad + 18, bottomY + 84, partyCardWidth - 36, 5).fill({ color: COLORS.hp });
     this.chrome.rect(pad + 18, bottomY + 96, partyCardWidth - 36, 4).fill({ color: 0x26364c });
     this.chrome.rect(pad + 18, bottomY + 96, partyCardWidth - 36, 4).fill({ color: COLORS.mp });
-  }
-
-  private drawCrest(x: number, y: number, size: number): void {
-    this.crest.clear();
-    this.crest.circle(x + size / 2, y, size / 2).stroke({ color: COLORS.oldGold, alpha: 0.8, width: 1.5 });
-    this.crest.moveTo(x + size / 2, y - size * 0.32).lineTo(x + size / 2, y + size * 0.32).stroke({ color: COLORS.gold, alpha: 0.72, width: 1 });
-    this.crest.moveTo(x + size * 0.2, y).lineTo(x + size * 0.8, y).stroke({ color: COLORS.gold, alpha: 0.72, width: 1 });
   }
 
   private drawMenuRow(row: MenuRow, selected: boolean): void {
