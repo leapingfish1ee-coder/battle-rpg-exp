@@ -36,3 +36,42 @@ test('opens directly in the JRPG town menu through one Pixi canvas', async ({ pa
   await expect(canvas).toHaveAttribute('data-page', 'town');
   await expect(canvas).toHaveAttribute('data-menu', 'town');
 });
+
+test('repeated pointer selection is visually idempotent', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window.performance, 'now', {
+      configurable: true,
+      value: () => 1_000,
+    });
+  });
+  await page.goto('/');
+
+  const canvas = page.locator('#app canvas');
+  await expect(canvas).toHaveAttribute('data-selected-facility', 'guild');
+
+  const bounds = await canvas.boundingBox();
+  if (!bounds) throw new Error('Missing Pixi canvas bounds.');
+
+  const compact = bounds.width < 900 || bounds.height < 620;
+  const pad = compact ? 18 : 28;
+  const menuWidth = compact ? Math.min(300, bounds.width * 0.38) : Math.min(356, bounds.width * 0.3);
+  const menuX = bounds.width - menuWidth - pad;
+  const menuY = compact ? 92 : 108;
+  const rowHeight = compact ? 46 : 52;
+  const guildCenter = {
+    x: menuX + menuWidth / 2,
+    y: menuY + 52 + rowHeight / 2,
+  };
+
+  await page.mouse.move(1, 1);
+  const before = await canvas.screenshot();
+
+  for (let click = 0; click < 8; click += 1) {
+    await canvas.click({ position: guildCenter });
+    await expect(canvas).toHaveAttribute('data-selected-facility', 'guild');
+  }
+
+  await page.mouse.move(1, 1);
+  const after = await canvas.screenshot();
+  expect(after).toEqual(before);
+});
