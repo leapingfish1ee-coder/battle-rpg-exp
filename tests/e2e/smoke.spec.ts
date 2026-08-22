@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('opens directly in the JRPG town menu through one Pixi canvas', async ({ page }) => {
+test('opens directly in the JRPG town menu through one high-fidelity Pixi canvas', async ({ page }) => {
   await page.goto('/');
 
   const canvas = page.locator('#app canvas');
@@ -15,6 +15,8 @@ test('opens directly in the JRPG town menu through one Pixi canvas', async ({ pa
   await expect(canvas).toHaveAttribute('data-location', 'lumina');
   await expect(canvas).toHaveAttribute('data-selected-facility', 'guild');
   await expect(canvas).toHaveAttribute('data-party-size', '1');
+  await expect(canvas).toHaveAttribute('data-render-quality', /^(high|medium|low)$/);
+  await expect(canvas).toHaveAttribute('data-render-resolution', /^(1\.00|1\.35|1\.75|2\.00)$/);
   await expect(canvas).toHaveAttribute('data-render-state', 'ready');
   await expect(page.locator('#app').locator(':scope > *')).toHaveCount(1);
   await expect(page.locator('#app').locator(':scope > :not(canvas)')).toHaveCount(0);
