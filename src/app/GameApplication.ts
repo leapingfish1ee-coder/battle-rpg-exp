@@ -8,6 +8,8 @@ import { SimulationWorld } from '../simulation/world/SimulationWorld';
 const MAX_FRAME_SECONDS = 0.25;
 const MAX_CATCH_UP_STEPS = 8;
 
+type ApplicationPhase = 'idle' | 'home' | 'combat';
+
 export class GameApplication {
   private readonly input = new BrowserInput();
   private readonly simulation = new SimulationWorld();
@@ -16,7 +18,7 @@ export class GameApplication {
   private readonly snapshots = new SnapshotBuffer(this.simulation.snapshot());
   private accumulatorSeconds = 0;
   private previousFrameMilliseconds = 0;
-  private running = false;
+  private phase: ApplicationPhase = 'idle';
 
   private constructor(private readonly renderer: PixiRenderer) {}
 
@@ -27,18 +29,17 @@ export class GameApplication {
   }
 
   public start(): void {
-    if (this.running) return;
-    this.running = true;
-    this.previousFrameMilliseconds = performance.now();
-    this.input.attach();
-    this.renderer.start(this.frame);
+    if (this.phase !== 'idle') return;
+    this.phase = 'home';
+    this.renderer.startHome(this.beginCombat);
   }
 
   public stop(): void {
-    if (!this.running) return;
-    this.running = false;
+    if (this.phase === 'idle') return;
+    const wasInCombat = this.phase === 'combat';
+    this.phase = 'idle';
     this.renderer.stop();
-    this.input.detach();
+    if (wasInCombat) this.input.detach();
   }
 
   public destroy(): void {
@@ -46,8 +47,17 @@ export class GameApplication {
     this.renderer.destroy();
   }
 
+  private readonly beginCombat = (): void => {
+    if (this.phase !== 'home') return;
+    this.phase = 'combat';
+    this.accumulatorSeconds = 0;
+    this.previousFrameMilliseconds = performance.now();
+    this.input.attach();
+    this.renderer.start(this.frame);
+  };
+
   private readonly frame = (nowMilliseconds: number): void => {
-    if (!this.running) return;
+    if (this.phase !== 'combat') return;
 
     const frameSeconds = Math.min(
       Math.max((nowMilliseconds - this.previousFrameMilliseconds) / 1000, 0),
