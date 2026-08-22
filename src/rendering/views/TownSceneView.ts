@@ -42,6 +42,8 @@ interface MenuRow {
   readonly label: Text;
   readonly subtitle: Text;
   readonly facility: TownFacility;
+  width: number;
+  height: number;
 }
 
 export class TownSceneView {
@@ -144,7 +146,16 @@ export class TownSceneView {
       root.cursor = 'pointer';
       root.on('pointertap', () => callbacks.onSelectFacility(facility.id));
       root.addChild(frame, marker, label, subtitle);
-      this.menuRows.push({ root, frame, marker, label, subtitle, facility: facility.id });
+      this.menuRows.push({
+        root,
+        frame,
+        marker,
+        label,
+        subtitle,
+        facility: facility.id,
+        width: 300,
+        height: 52,
+      });
     }
 
     this.header.addChild(this.locationLabel, this.regionLabel, this.dayLabel, this.currencyLabel);
@@ -224,7 +235,8 @@ export class TownSceneView {
     const rowGap = compact ? 5 : 7;
     this.menuRows.forEach((row, index) => {
       row.root.position.set(menuX + 10, menuY + 52 + index * (rowHeight + rowGap));
-      row.frame.clear().roundRect(0, 0, menuWidth - 20, rowHeight, 5).fill({ color: COLORS.panelRaised, alpha: 0.92 });
+      row.width = menuWidth - 20;
+      row.height = rowHeight;
       row.label.style.fontSize = compact ? 13 : 15;
       row.label.position.set(18, rowHeight / 2);
       row.subtitle.position.set(menuWidth - 38, rowHeight / 2);
@@ -382,8 +394,7 @@ export class TownSceneView {
   }
 
   private drawMenuRow(row: MenuRow, selected: boolean): void {
-    const width = row.frame.width || 300;
-    const height = row.frame.height || 52;
+    const { width, height } = row;
     row.frame.clear().roundRect(0, 0, width, height, 5).fill({ color: selected ? COLORS.navyLight : COLORS.panelRaised, alpha: selected ? 1 : 0.92 });
     if (selected) row.frame.stroke({ color: COLORS.goldBright, alpha: 0.95, width: 1 });
     row.marker.clear();
