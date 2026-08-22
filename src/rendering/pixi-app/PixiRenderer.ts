@@ -57,6 +57,9 @@ export class PixiRenderer {
     this.app.canvas.dataset.renderQuality = this.renderProfile.quality;
     this.app.canvas.dataset.renderResolution = this.renderProfile.resolution.toFixed(2);
     this.app.canvas.dataset.backgroundArt = 'none';
+    this.app.canvas.dataset.topbar = 'kingdom';
+    this.app.canvas.dataset.topbarSource = 'figma-2-2';
+    this.app.canvas.dataset.topbarMetrics = 'hp,mp,level,gold,day,party';
     host.appendChild(this.app.canvas);
     this.app.resize();
   }
@@ -104,6 +107,7 @@ export class PixiRenderer {
     this.app.canvas.dataset.gameMode = 'jrpg-adventure';
     this.app.canvas.dataset.menu = 'town';
     this.app.canvas.dataset.location = state.townId;
+    this.app.canvas.dataset.weather = state.weather;
     this.app.canvas.dataset.selectedFacility = state.selectedFacility;
     this.app.canvas.dataset.partySize = String(state.party.length);
     this.app.canvas.dataset.gold = String(state.gold);
