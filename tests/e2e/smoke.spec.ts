@@ -17,8 +17,8 @@ test('opens directly in the JRPG town menu through one high-fidelity Pixi canvas
   await expect(canvas).toHaveAttribute('data-party-size', '1');
   await expect(canvas).toHaveAttribute('data-render-quality', /^(high|medium|low)$/);
   await expect(canvas).toHaveAttribute('data-render-resolution', /^(1\.00|1\.35|1\.75|2\.00)$/);
-  await expect(canvas).toHaveAttribute('data-background-art', 'generated-lumina-town');
-  await expect(canvas).toHaveAttribute('data-background-ready', 'true');
+  await expect(canvas).toHaveAttribute('data-background-art', 'none');
+  await expect(canvas).not.toHaveAttribute('data-background-ready', /.+/);
   await expect(canvas).toHaveAttribute('data-render-state', 'ready');
   await expect(page.locator('#app').locator(':scope > *')).toHaveCount(1);
   await expect(page.locator('#app').locator(':scope > :not(canvas)')).toHaveCount(0);
