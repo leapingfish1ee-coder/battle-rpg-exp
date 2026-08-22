@@ -13,11 +13,15 @@ test('opens directly in the JRPG town menu through one high-fidelity Pixi canvas
   await expect(canvas).toHaveAttribute('data-game-mode', 'jrpg-adventure');
   await expect(canvas).toHaveAttribute('data-menu', 'town');
   await expect(canvas).toHaveAttribute('data-location', 'lumina');
+  await expect(canvas).toHaveAttribute('data-weather', 'clear');
   await expect(canvas).toHaveAttribute('data-selected-facility', 'guild');
   await expect(canvas).toHaveAttribute('data-party-size', '1');
   await expect(canvas).toHaveAttribute('data-render-quality', /^(high|medium|low)$/);
   await expect(canvas).toHaveAttribute('data-render-resolution', /^(1\.00|1\.35|1\.75|2\.00)$/);
   await expect(canvas).toHaveAttribute('data-background-art', 'none');
+  await expect(canvas).toHaveAttribute('data-topbar', 'kingdom');
+  await expect(canvas).toHaveAttribute('data-topbar-source', 'figma-2-2');
+  await expect(canvas).toHaveAttribute('data-topbar-metrics', 'hp,mp,level,gold,day,party');
   await expect(canvas).not.toHaveAttribute('data-background-ready', /.+/);
   await expect(canvas).toHaveAttribute('data-render-state', 'ready');
   await expect(page.locator('#app').locator(':scope > *')).toHaveCount(1);
@@ -39,6 +43,34 @@ test('opens directly in the JRPG town menu through one high-fidelity Pixi canvas
   await page.keyboard.press('Enter');
   await expect(canvas).toHaveAttribute('data-page', 'town');
   await expect(canvas).toHaveAttribute('data-menu', 'town');
+});
+
+test('Kingdom TopBar remains visually stable across town-menu state changes', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.goto('/');
+
+  const canvas = page.locator('#app canvas');
+  await expect(canvas).toHaveAttribute('data-topbar', 'kingdom');
+  await expect(canvas).toHaveAttribute('data-selected-facility', 'guild');
+
+  const bounds = await canvas.boundingBox();
+  if (!bounds) throw new Error('Missing Pixi canvas bounds.');
+
+  const topBarClip = {
+    x: bounds.x,
+    y: bounds.y,
+    width: bounds.width,
+    height: 80,
+  };
+  const before = await page.screenshot({ clip: topBarClip });
+
+  await page.keyboard.press('ArrowDown');
+  await expect(canvas).toHaveAttribute('data-selected-facility', 'inn');
+  await page.keyboard.press('ArrowUp');
+  await expect(canvas).toHaveAttribute('data-selected-facility', 'guild');
+
+  const after = await page.screenshot({ clip: topBarClip });
+  expect(after).toEqual(before);
 });
 
 test('repeated pointer selection is visually idempotent', async ({ page }) => {
